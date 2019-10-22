@@ -1,2 +1,7 @@
-export { Vec2 } from './math/vec2';
-export { Vec3 } from './math/vec3';
+export { vec2, Vec2 } from './math/vec2';
+export { vec3, Vec3 } from './math/vec3';
+export { Mat2 } from './math/mat2';
+export { Mat3 } from './math/mat3';
+export { Mat4 } from './math/mat4';
+export { Quaternion } from './math/quaternion';
+export { Transform } from './math/transform';
