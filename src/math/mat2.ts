@@ -8,7 +8,7 @@ export class Mat2 {
   }
 
   static fromElements(elements: Float32Array): Mat2 {
-    return new Mat2(new _Mat2(elements));
+    return new Mat2(new _Mat2({elements: elements}));
   }
 
   static scale2d(x: number | Vec2, y?: number): Mat2 {
@@ -25,10 +25,12 @@ export class Mat2 {
   }
 
   static basis(x: Vec2, y: Vec2): Mat2 {
-    return new Mat2(new _Mat2(new Float32Array([
-      x.x, x.y,
-      y.x, y.y
-    ])));
+    return new Mat2(new _Mat2({
+      elements: new Float32Array([
+        x.x, x.y,
+        y.x, y.y
+      ])
+    }));
   }
 
   static mul(m1: Mat2, m2: Mat2, ...ms: Mat2[]): Mat2 {
@@ -53,17 +55,20 @@ export class Mat2 {
 }
 
 type _Mat2ConstructorOptions = {
-  determinant?: number | null,
-  inversed?: _Mat2 | null,
-  transposed?: _Mat2 | null,
+  elements?: Float32Array,
+  determinant?: number,
+  inversed?: _Mat2,
+  transposed?: _Mat2,
 }
 
 class _Mat2 {
+  protected _elements: Float32Array | null = null;
   protected _determinant: number | null = null;
   protected _inversed: _Mat2 | null = null;
   protected _transposed: _Mat2 | null = null;
 
-  constructor(readonly elements: Float32Array, options: _Mat2ConstructorOptions = {}) {
+  constructor(options: _Mat2ConstructorOptions = {}) {
+    this._elements = options.elements !== undefined ? options.elements : null;
     this._determinant = options.determinant !== undefined ? options.determinant : null;
     this._inversed = options.inversed !== undefined ? options.inversed : null;
     this._transposed = options.transposed !== undefined ? options.transposed : null;
@@ -71,6 +76,13 @@ class _Mat2 {
 
   static mul(m1: _Mat2, m2: _Mat2, ...ms: _Mat2[]): _Mat2 {
     return ms.reduce((accum, m) => accum.mul(m), m1.mul(m2));
+  }
+
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      throw new Error('_Mat2 needs elements.');
+    }
+    return this._elements;
   }
 
   get determinant(): number {
@@ -83,20 +95,30 @@ class _Mat2 {
   get inversed(): _Mat2 {
     if (this._inversed === null) {
       const invD = 1 / this.determinant;
-      this._inversed = new _Mat2(new Float32Array([
-        this.elements[3] * invD, -this.elements[2] * invD,
-        -this.elements[1] * invD, this.elements[0] * invD
-      ]), {inversed: this});
+      const e = this.elements;
+      const elements = new Float32Array([
+        e[3] * invD, -e[2] * invD,
+        -e[1] * invD, e[0] * invD
+      ]);
+      this._inversed = new _Mat2({
+        elements: elements,
+        inversed: this,
+      });
     }
     return this._inversed;
   }
 
   get transposed(): _Mat2 {
     if (this._transposed === null) {
-      this._transposed = new _Mat2(new Float32Array([
-        this.elements[0], this.elements[2],
-        this.elements[1], this.elements[3]
-      ]), {transposed: this});
+      const e = this.elements;
+      const elements = new Float32Array([
+        e[0], e[2],
+        e[1], e[3]
+      ]);
+      this._transposed = new _Mat2({
+        elements: elements,
+        transposed: this,
+      });
     }
     return this._transposed;
   }
@@ -104,12 +126,12 @@ class _Mat2 {
   protected mul(m: _Mat2): _Mat2 {
     const e1 = this.elements;
     const e2 = m.elements;
-    return new _Mat2(new Float32Array([
+    return new _Mat2({elements: new Float32Array([
       e1[0] * e2[0] + e1[1] * e2[2],
       e1[0] * e2[1] + e1[1] * e2[3],
       e1[2] * e2[0] + e1[3] * e2[2],
       e1[2] * e2[1] + e1[3] * e2[3]
-    ]));
+    ])});
   }
 }
 
@@ -117,10 +139,12 @@ class _IdentityMat2 extends _Mat2 {
   static readonly instance = new _IdentityMat2();
 
   private constructor() {
-    super(new Float32Array([
-      1, 0,
-      0, 1
-    ]));
+    super({
+      elements: new Float32Array([
+        1, 0,
+        0, 1
+      ])
+    });
   }
 
   /**
@@ -155,13 +179,26 @@ class _IdentityMat2 extends _Mat2 {
 class _Scale2dMat2 extends _Mat2 {
   private rate: Vec2;
   constructor(x: number, y: number, options: _Mat2ConstructorOptions = {}) {
-    super(new Float32Array([
-      x, 0,
-      0, y
-    ]), options);
+    super(options);
     this.rate = new Vec2(x, y);
   }
 
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      this._elements = new Float32Array([
+        this.rate.x, 0,
+        0, this.rate.y
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat2 {
     if (this._inversed === null) {
       this._inversed = new _Scale2dMat2(1 / this.rate.x, 1 / this.rate.y, {inversed: this});
@@ -169,27 +206,58 @@ class _Scale2dMat2 extends _Mat2 {
     return this._inversed;
   }
 
+  /**
+   * @override
+   */
   get transposed(): _Mat2 {
     return this;
+  }
+
+  /**
+   * @override
+   */
+  protected mul(m: _Mat2): _Mat2 {
+    const e = m.elements;
+    return new _Scale2dMat2(this.rate.x * e[0], this.rate.y * e[3]);
   }
 }
 
 class _Rotate2dMat2 extends _Mat2 {
   private radian: number;
   constructor(radian: number, options: _Mat2ConstructorOptions = {}) {
-    const c = Math.cos(radian);
-    const s = Math.sin(radian);
-    super(new Float32Array([
-      c, s,
-      -s, c
-    ]), options);
+    super(options);
     this.radian = radian;
   }
 
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      const c = Math.cos(this.radian);
+      const s = Math.sin(this.radian);
+      this._elements = new Float32Array([
+        c, s,
+        -s, c
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat2 {
     if (this._inversed === null) {
       this._inversed = new _Rotate2dMat2(-this.radian, {inversed: this});
     }
     return this._inversed;
+  }
+
+  /**
+   * @override
+   */
+  get transposed(): _Mat2 {
+    return this.inversed;
   }
 }

@@ -1,4 +1,5 @@
 import { Vec3 } from './Vec3';
+import { Mat3 } from './Mat3';
 import { Mat4 } from './Mat4';
 
 export class Quaternion {
@@ -202,5 +203,40 @@ export class Quaternion {
 
   toArray(): [number, number, number, number] {
     return [this.x, this.y, this.z, this.w];
+  }
+
+  toMat3(): Mat3 {
+    const xx = this.x * this.x;
+    const yy = this.y * this.y;
+    const zz = this.z * this.z;
+    const xy = this.x * this.y;
+    const xz = this.x * this.z;
+    const xw = this.x * this.w;
+    const yz = this.y * this.z;
+    const yw = this.y * this.w;
+    const zw = this.z * this.w;
+    return Mat3.fromElements(new Float32Array([
+      1 - 2 * yy - 2 * zz, 2 * xy + 2 * zw, 2 * xz - 2 * yw,
+      2 * xy - 2 * zw, 1 - 2 * xx - 2 * zz, 2 * yz + 2 * xw,
+      2 * xz + 2 * yw, 2 * yz - 2 * xw, 1 - 2 * xx - 2 * yy
+    ]));
+  }
+
+  toMat4(): Mat4 {
+    const xx = this.x * this.x;
+    const yy = this.y * this.y;
+    const zz = this.z * this.z;
+    const xy = this.x * this.y;
+    const xz = this.x * this.z;
+    const xw = this.x * this.w;
+    const yz = this.y * this.z;
+    const yw = this.y * this.w;
+    const zw = this.z * this.w;
+    return Mat4.fromElements(new Float32Array([
+      1 - 2 * yy - 2 * zz, 2 * xy + 2 * zw, 2 * xz - 2 * yw, 0,
+      2 * xy - 2 * zw, 1 - 2 * xx - 2 * zz, 2 * yz + 2 * xw, 0,
+      2 * xz + 2 * yw, 2 * yz - 2 * xw, 1 - 2 * xx - 2 * yy, 0,
+      0, 0, 0, 1
+    ]));
   }
 }

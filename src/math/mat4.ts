@@ -10,7 +10,7 @@ export class Mat4 {
   }
 
   static fromElements(elements: Float32Array): Mat4 {
-    return new Mat4(new _Mat4(elements));
+    return new Mat4(new _Mat4({elements: elements}));
   }
 
   static translate(x: number | Vec3, y?: number, z?: number): Mat4 {
@@ -44,12 +44,14 @@ export class Mat4 {
   }
 
   static basis(x: Vec3, y: Vec3, z: Vec3): Mat4 {
-    return new Mat4(new _Mat4(new Float32Array([
-      x.x, x.y, x.z, 0.0,
-      y.x, y.y, y.z, 0.0,
-      z.x, z.y, z.z, 0.0,
-      0.0, 0.0, 0.0, 1.0
-    ])));
+    return new Mat4(new _Mat4({
+      elements: new Float32Array([
+        x.x, x.y, x.z, 0.0,
+        y.x, y.y, y.z, 0.0,
+        z.x, z.y, z.z, 0.0,
+        0.0, 0.0, 0.0, 1.0
+      ])
+    }));
   }
 
   static perspective(aspect: number, vfov: number, near: number, far: number): Mat4 {
@@ -58,23 +60,26 @@ export class Mat4 {
     const r = aspect * t;
     const fpn = far + near;
     const fmn = far - near;
-
-    return new Mat4(new _Mat4(new Float32Array([
-      near / r, 0.0, 0.0, 0.0,
-      0.0, near / t, 0.0, 0.0,
-      0.0, 0.0, -fpn / fmn, -1.0,
-      0.0, 0.0, -2.0 * far * near / fmn, 0.0
-    ])));
+    return new Mat4(new _Mat4({
+      elements: new Float32Array([
+        near / r, 0.0, 0.0, 0.0,
+        0.0, near / t, 0.0, 0.0,
+        0.0, 0.0, -fpn / fmn, -1.0,
+        0.0, 0.0, -2.0 * far * near / fmn, 0.0
+      ])
+    }));
   }
 
   static orthographic(width: number, height: number, near: number, far: number): Mat4 {
     const invFmn = 1.0 / (far - near);
-    return new Mat4(new _Mat4(new Float32Array([
-      2.0 / width, 0.0, 0.0, 0.0,
-      0.0, 2.0 / height, 0.0, 0.0,
-      0.0, 0.0, -2.0 * invFmn, 0.0,
-      0.0, 0.0, -(far + near) * invFmn, 1.0 
-    ])));
+    return new Mat4(new _Mat4({
+      elements: new Float32Array([
+        2.0 / width, 0.0, 0.0, 0.0,
+        0.0, 2.0 / height, 0.0, 0.0,
+        0.0, 0.0, -2.0 * invFmn, 0.0,
+        0.0, 0.0, -(far + near) * invFmn, 1.0 
+      ])
+    }));
   }
 
   static lookTo(forward: Vec3, up: Vec3 = Vec3.up): Mat4 {
@@ -110,22 +115,29 @@ export class Mat4 {
 }
 
 type _Mat4ConstructorOptions = {
-  determinant?: number | null,
-  inversed?: _Mat4 | null,
-  transposed?: _Mat4 | null,
-  normal?: _Mat4 | null,
+  elements?: Float32Array,
+  determinant?: number,
+  inversed?: _Mat4,
+  transposed?: _Mat4,
 }
 
 class _Mat4 {
+  protected _elements: Float32Array | null = null;
   protected _determinant: number | null = null;
   protected _inversed: _Mat4 | null = null;
   protected _transposed: _Mat4 | null = null;
-  protected _normal: _Mat4 | null = null;
-  constructor(readonly elements: Float32Array, options: _Mat4ConstructorOptions = {}) {
+  constructor(options: _Mat4ConstructorOptions = {}) {
+    this._elements = options.elements !== undefined ? options.elements : null;
     this._determinant = options.determinant !== undefined ? options.determinant : null;
     this._inversed = options.inversed !== undefined ? options.inversed : null;
     this._transposed = options.transposed !== undefined ? options.transposed : null;
-    this._normal = options.normal !== undefined ? options.normal : null;
+  }
+
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      throw new Error('_Mat4 needs elements.');
+    }
+    return this._elements;
   }
 
   get determinant(): number {
@@ -147,7 +159,7 @@ class _Mat4 {
       }
       const invD = 1.0 / d;
       const e = this.elements;
-      this._inversed = new _Mat4(new Float32Array([
+      const elements = new Float32Array([
         (e[5] * e[10] * e[15] + e[9] * e[14] * e[7] + e[13] * e[6] * e[11]
           - e[13] * e[10] * e[7] - e[9] * e[6] * e[15] - e[5] * e[14] * e[11]) * invD,
         -(e[1] * e[10] * e[15] + e[9] * e[14] * e[3] + e[13] * e[2] * e[11]
@@ -180,26 +192,32 @@ class _Mat4 {
           - e[12] * e[5] * e[2] - e[4] * e[1] * e[14] - e[0] * e[13] * e[6]) * invD,
         (e[0] * e[5] * e[10] + e[4] * e[9] * e[2] + e[8] * e[1] * e[6]
           - e[8] * e[5] * e[2] - e[4] * e[1] * e[10] - e[0] * e[9] * e[6]) * invD
-      ]), {inversed: this});
+      ]);
+      this._inversed = new _Mat4({
+        elements: elements,
+        inversed: this
+      });
     }
     return this._inversed;
   }
 
   get normal(): _Mat4 {
-    if (this._normal === null) {
-      this._normal = this.inversed.transposed;
-    }
-    return this._normal;
+    return this.inversed.transposed;
   }
 
   get transposed(): _Mat4 {
     if (this._transposed === null) {
-      this._transposed = new _Mat4(new Float32Array([
-        this.elements[0], this.elements[4], this.elements[8], this.elements[12],
-        this.elements[1], this.elements[5], this.elements[9], this.elements[13],
-        this.elements[2], this.elements[6], this.elements[10], this.elements[14],
-        this.elements[3], this.elements[7], this.elements[11], this.elements[15]
-      ]), {transposed: this});
+      const e = this.elements;
+      const elements = new Float32Array([
+        e[0], e[4], e[8], e[12],
+        e[1], e[5], e[9], e[13],
+        e[2], e[6], e[10], e[14],
+        e[3], e[7], e[11], e[15]
+      ]);
+      this._transposed = new _Mat4({
+        elements: elements,
+        transposed: this
+      });
     }
     return this._transposed;
   }
@@ -211,7 +229,7 @@ class _Mat4 {
   protected _mul(m: _Mat4): _Mat4 {
     const e1 = this.elements;
     const e2 = m.elements;
-    return new _Mat4(new Float32Array([
+    const elements = new Float32Array([
       e1[0] * e2[0] + e1[1] * e2[4] + e1[2] * e2[8] + e1[3] * e2[12],
       e1[0] * e2[1] + e1[1] * e2[5] + e1[2] * e2[9] + e1[3] * e2[13],
       e1[0] * e2[2] + e1[1] * e2[6] + e1[2] * e2[10] + e1[3] * e2[14],
@@ -231,7 +249,10 @@ class _Mat4 {
       e1[12] * e2[1] + e1[13] * e2[5] + e1[14] * e2[9] + e1[15] * e2[13],
       e1[12] * e2[2] + e1[13] * e2[6] + e1[14] * e2[10] + e1[15] * e2[14],
       e1[12] * e2[3] + e1[13] * e2[7] + e1[14] * e2[11] + e1[15] * e2[15],
-    ]));
+    ]);
+    return new _Mat4({
+      elements: elements
+    });
   }
 }
 
@@ -239,12 +260,14 @@ class _IdentityMat4 extends _Mat4 {
   static readonly instance = new _IdentityMat4();
 
   private constructor() {
-    super(new Float32Array([
-      1.0, 0.0, 0.0, 0.0,
-      0.0, 1.0, 0.0, 0.0,
-      0.0, 0.0, 1.0, 0.0,
-      0.0, 0.0, 0.0, 1.0
-    ]));
+    super({elements: 
+      new Float32Array([
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ])
+    });
   }
 
   /**
@@ -285,24 +308,33 @@ class _IdentityMat4 extends _Mat4 {
 
 class _TranslateMat4 extends _Mat4 {
   private offset: Vec3;
-  constructor(x: number, y: number, z: number) {
-    super(new Float32Array([
-      1.0, 0.0, 0.0, 0.0,
-      0.0, 1.0, 0.0, 0.0,
-      0.0, 0.0, 1.0, 0.0,
-      x, y, z, 1.0
-    ]));
+  constructor(x: number, y: number, z: number, options: _Mat4ConstructorOptions = {}) {
+    super(options);
     this.offset = new Vec3(x, y, z);
   }
 
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      this._elements = new Float32Array([
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        this.offset.x, this.offset.y, this.offset.z, 1
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat4 {
     if (this._inversed === null) {
-      this._inversed = new _Mat4(new Float32Array([
-        1.0, 0.0, 0.0, 0.0,
-        0.0, 1.0, 0.0, 0.0,
-        0.0, 0.0, 1.0, 0.0,
-        -this.offset.x, -this.offset.y, -this.offset.z, 1.0
-      ]), this);
+      this._inversed = new _TranslateMat4(
+        -this.offset.x, -this.offset.y, -this.offset.z, {inversed: this});
     }
     return this._inversed;
   }
@@ -310,92 +342,178 @@ class _TranslateMat4 extends _Mat4 {
 
 class _ScaleMat4 extends _Mat4 {
   private rate: Vec3;
-  constructor(x: number, y: number, z: number) {
-    super(new Float32Array([
-      x, 0.0, 0.0, 0.0,
-      0.0, y, 0.0, 0.0,
-      0.0, 0.0, z, 0.0,
-      0.0, 0.0, 0.0, 1.0
-    ]));
+  constructor(x: number, y: number, z: number, options: _Mat4ConstructorOptions = {}) {
+    super(options);
     this.rate = new Vec3(x, y, z);
   }
 
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      this._elements = new Float32Array([
+        this.rate.x, 0, 0, 0,
+        0, this.rate.y, 0, 0,
+        0, 0, this.rate.z, 0,
+        0, 0, 0, 1
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
+  get determinant(): number {
+    if (this._determinant === null) {
+      this._determinant = this.rate.x * this.rate.y * this.rate.z;
+    }
+    return this._determinant;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat4 {
     if (this._inversed === null) {
-      this._inversed = new _Mat4(new Float32Array([
-        1.0 / this.rate.x, 0.0, 0.0, 0.0,
-        0.0, 1.0 / this.rate.y, 0.0, 0.0,
-        0.0, 0.0, 1.0 / this.rate.z, 0.0,
-        0.0, 0.0, 0.0, 1.0
-      ]), {inversed: this});
+      this._inversed = new _ScaleMat4(
+        1 / this.rate.x, 1 / this.rate.y, 1 / this.rate.z, {inversed: this});
     }
     return this._inversed;
+  }
+
+  /**
+   * @override
+   */
+  get transposed(): _Mat4 {
+    return this;
   }
 }
 
 class _RotateXMat4 extends _Mat4 {
   private radian: number;
-  constructor(radian: number, inversed?: _Mat4) {
-    const c = Math.cos(radian);
-    const s = Math.sin(radian);
-    super(new Float32Array([
-      1, 0, 0, 0,
-      0, c, s, 0,
-      0, -s, c, 0,
-      0, 0, 0, 1
-    ]), {inversed: inversed});
+  constructor(radian: number, options: _Mat4ConstructorOptions = {}) {
+    super(options);
     this.radian = radian;
   }
 
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      const c = Math.cos(this.radian);
+      const s = Math.sin(this.radian);
+      this._elements = new Float32Array([
+        1, 0, 0, 0,
+        0, c, s, 0,
+        0, -s, c, 0,
+        0, 0, 0, 1
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat4 {
     if (this._inversed === null) {
-      this._inversed = new _RotateXMat4(-this.radian, this);
+      this._inversed = new _RotateXMat4(-this.radian, {inversed: this});
     }
     return this._inversed;
+  }
+
+  /**
+   * @override
+   */
+  get transposed(): _Mat4 {
+    return this.inversed;
   }
 }
 
 class _RotateYMat4 extends _Mat4 {
   private radian: number;
-  constructor(radian: number, inversed?: _Mat4) {
-    const c = Math.cos(radian);
-    const s = Math.sin(radian);
-    super(new Float32Array([
-      c, 0, -s, 0,
-      0, 1, 0, 0,
-      s, 0, c, 0,
-      0, 0, 0, 1
-    ]), {inversed: inversed});
+  constructor(radian: number, options: _Mat4ConstructorOptions = {}) {
+    super(options);
     this.radian = radian;
   }
 
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      const c = Math.cos(this.radian);
+      const s = Math.sin(this.radian);
+      this._elements = new Float32Array([
+        c, 0, -s, 0,
+        0, 1, 0, 0,
+        s, 0, c, 0,
+        0, 0, 0, 1
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat4 {
     if (this._inversed === null) {
       this._inversed = new _RotateYMat4(-this.radian, this);
     }
     return this._inversed;
   }
+
+  /**
+   * @override
+   */
+  get transposed(): _Mat4 {
+    return this.inversed;
+  }
 }
 
 class _RotateZMat4 extends _Mat4 {
   private radian: number;
-  constructor(radian: number, inversed?: _Mat4) {
-    const c = Math.cos(radian);
-    const s = Math.sin(radian);
-    super(new Float32Array([
-      c, s, 0, 0,
-      -s, c, 0, 0,
-      0, 0, 1, 0,
-      0, 0, 0, 1
-    ]), {inversed: inversed});
+  constructor(radian: number, options: _Mat4ConstructorOptions = {}) {
+    super(options);
     this.radian = radian;
   }
 
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      const c = Math.cos(this.radian);
+      const s = Math.sin(this.radian);
+      this._elements = new Float32Array([
+        c, s, 0, 0,
+        -s, c, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat4 {
     if (this._inversed === null) {
       this._inversed = new _RotateZMat4(-this.radian, this);
     }
     return this._inversed;
+  }
+
+  /**
+   * @override
+   */
+  get transposed(): _Mat4 {
+    return this.inversed;
   }
 }
 

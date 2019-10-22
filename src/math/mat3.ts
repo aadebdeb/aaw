@@ -10,7 +10,7 @@ export class Mat3 {
   }
 
   static fromElements(elements: Float32Array): Mat3 {
-    return new Mat3(new _Mat3(elements));
+    return new Mat3(new _Mat3({elements: elements}));
   }
 
   static translate2d(x: number | Vec2, y?: number): Mat3 {
@@ -57,11 +57,13 @@ export class Mat3 {
   }
 
   static basis(x: Vec3, y: Vec3, z: Vec3): Mat3 {
-    return new Mat3(new _Mat3(new Float32Array([
-      x.x, x.y, x.z,
-      y.x, y.y, y.z,
-      z.x, z.y, z.z
-    ])));
+    return new Mat3(new _Mat3({
+      elements: new Float32Array([
+        x.x, x.y, x.z,
+        y.x, y.y, y.z,
+        z.x, z.y, z.z
+      ])
+    }));
   }
 
   static lookTo(forward: Vec3, up: Vec3 = Vec3.up): Mat3 {
@@ -93,24 +95,29 @@ export class Mat3 {
 }
 
 type _Mat3ConstructorOptions = {
-  determinant?: number | null,
-  inversed?: _Mat3 | null,
-  transposed?: _Mat3 | null,
-  normal?: _Mat3 | null,
+  elements?: Float32Array,
+  determinant?: number,
+  inversed?: _Mat3,
+  transposed?: _Mat3,
 }
 
 class _Mat3 {
+  protected _elements: Float32Array | null = null;
   protected _determinant: number | null = null;
   protected _inversed: _Mat3 | null = null;
   protected _transposed: _Mat3 | null = null;
-  constructor(readonly elements: Float32Array, {
-    determinant = null,
-    inversed = null,
-    transposed = null,
-  }: _Mat3ConstructorOptions = {}) {
-    this._determinant = determinant;
-    this._inversed = inversed;
-    this._transposed = transposed;
+  constructor(options: _Mat3ConstructorOptions = {}) {
+    this._elements = options.elements !== undefined ? options.elements : null;
+    this._determinant = options.determinant !== undefined ? options.determinant : null;
+    this._inversed = options.inversed !== undefined ? options.inversed : null;
+    this._transposed = options.transposed !== undefined ? options.transposed : null;
+  }
+
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      throw new Error('_Mat3 needs elements.');
+    }
+    return this._elements;
   }
 
   get determinant(): number {
@@ -130,7 +137,7 @@ class _Mat3 {
       }
       const invD = 1.0 / d;
       const e = this.elements;
-      this._inversed = new _Mat3(new Float32Array([
+      const elements = new Float32Array([
         (e[4] * e[8] - e[7] * e[5]) * invD,
         -(e[1] * e[8] - e[7] * e[2]) * invD,
         (e[1] * e[5] - e[4] * e[2]) * invD,
@@ -140,18 +147,26 @@ class _Mat3 {
         (e[3] * e[7] - e[6] * e[4]) * invD,
         -(e[0] * e[7] - e[6] * e[1]) * invD,
         (e[0] * e[4] - e[3] * e[1]) * invD
-      ]), {inversed: this});
+      ]);
+      this._inversed = new _Mat3({
+        elements: elements,
+        inversed: this
+      });
     }
     return this._inversed;
   }
 
   get transposed(): _Mat3 {
     const e = this.elements;
-    return new _Mat3(new Float32Array([
+    const elements = new Float32Array([
       e[0], e[3], e[6],
       e[1], e[4], e[7],
       e[2], e[5], e[8]
-    ]), {transposed: this});
+    ]);
+    return new _Mat3({
+      elements: elements,
+      transposed: this
+    });
   }
 
   static mul(m1: _Mat3, m2: _Mat3, ...ms: _Mat3[]): _Mat3 {
@@ -161,7 +176,7 @@ class _Mat3 {
   protected _mul(m: _Mat3): _Mat3 {
     const e1 = this.elements;
     const e2 = m.elements;
-    return new _Mat3(new Float32Array([
+    const elements = new Float32Array([
       e1[0] * e2[0] + e1[1] * e2[3] + e1[2] * e2[6],
       e1[0] * e2[1] + e1[1] * e2[4] + e1[2] * e2[7],
       e1[0] * e2[2] + e1[1] * e2[5] + e1[2] * e2[8],
@@ -173,7 +188,10 @@ class _Mat3 {
       e1[6] * e2[0] + e1[7] * e2[3] + e1[8] * e2[6],
       e1[6] * e2[1] + e1[7] * e2[4] + e1[8] * e2[7],
       e1[6] * e2[2] + e1[7] * e2[5] + e1[8] * e2[8]
-    ]));
+    ]);
+    return new _Mat3({
+      elements: elements
+    });
   }
 }
 
@@ -181,11 +199,13 @@ class _IdentityMat3 extends _Mat3 {
   static readonly instance = new _IdentityMat3();
 
   private constructor() {
-    super(new Float32Array([
-      1, 0, 0,
-      0, 1, 0,
-      0, 0, 1
-    ]));
+    super({
+      elements: new Float32Array([
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+      ])
+    });
   }
 
   /**
@@ -220,22 +240,34 @@ class _IdentityMat3 extends _Mat3 {
 class _Translate2dMat3 extends _Mat3 {
   private offset: Vec2;
   constructor(x: number, y: number, options: _Mat3ConstructorOptions = {}) {
-    super(new Float32Array([
-      1, 0, 0,
-      0, 1, 0,
-      x, y, 1 
-    ]), options);
+    super(options);
     this.offset = new Vec2(x, y);
   }
 
-  get inversed(): _Mat3 {
-    if (this._inversed === null) {
-      this._inversed = new _Mat3(new Float32Array([
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      this._elements = new Float32Array([
         1, 0, 0,
         0, 1, 0,
-        0, 0, 1,
-        -this.offset.x, -this.offset.y, 1
-      ]), {inversed: this});
+        this.offset.x, this.offset.y, 1 
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
+  get inversed(): _Mat3 {
+    if (this._inversed === null) {
+      this._inversed = new _Translate2dMat3(
+        -this.offset.x,
+        -this.offset.y,
+        {inversed: this}
+      )
     }
     return this._inversed;
   }
@@ -244,39 +276,69 @@ class _Translate2dMat3 extends _Mat3 {
 class _Scale2dMat3 extends _Mat3 {
   private rate: Vec2;
   constructor(x: number, y: number, options: _Mat3ConstructorOptions = {}) {
-    super(new Float32Array([
-      x, 0, 0,
-      0, y, 0,
-      0, 0, 1
-    ]), options);
+    super(options);
     this.rate = new Vec2(x, y);
   }
 
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      this._elements = new Float32Array([
+        this.rate.x, 0, 0,
+        0, this.rate.y, 0,
+        0, 0, 1
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat3 {
     if (this._inversed === null) {
-      this._inversed = new _Mat3(new Float32Array([
-        1 / this.rate.x, 0, 0,
-        0, 1 / this.rate.y, 0,
-        0, 0,1
-      ]), {inversed: this});
+      this._inversed = new _Scale2dMat3(
+        1 / this.rate.x, 1 / this.rate.y, {inversed: this});
     }
     return this._inversed;
+  }
+
+  /**
+   * @override
+   */
+  get transposed(): _Mat3 {
+    return this;
   }
 }
 
 class _Rotate2dMat3 extends _Mat3 {
   private radian: number;
   constructor(radian: number, options: _Mat3ConstructorOptions = {})  {
-    const c = Math.cos(radian);
-    const s = Math.sin(radian);
-    super(new Float32Array([
-      c, s, 0,
-      -s, c, 0,
-      0, 0, 1
-    ]), options);
+    super(options);
     this.radian = radian;
   }
 
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      const c = Math.cos(this.radian);
+      const s = Math.sin(this.radian);
+      this._elements = new Float32Array([
+        c, s, 0,
+        -s, c, 0,
+        0, 0, 1
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat3 {
     if (this._inversed === null) {
       this._inversed = new _Rotate2dMat3(-this.radian, {inversed: this});
@@ -288,82 +350,163 @@ class _Rotate2dMat3 extends _Mat3 {
 class _ScaleMat3 extends _Mat3 {
   private rate: Vec3;
   constructor(x: number, y: number, z: number, options: _Mat3ConstructorOptions = {}) {
-    super(new Float32Array([
-      x, 0, 0,
-      0, y, 0,
-      0, 0, z 
-    ]), options);
+    super(options);
     this.rate = new Vec3(x, y, z);
   }
 
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      this._elements = new Float32Array([
+        this.rate.x, 0, 0,
+        0, this.rate.y, 0,
+        0, 0, this.rate.z 
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat3 {
     if (this._inversed === null) {
-      this._inversed = new _ScaleMat3(1 / this.rate.x, 1 / this.rate.y, 1 / this.rate.z, {inversed: this});
+      this._inversed = new _ScaleMat3(
+        1 / this.rate.x, 1 / this.rate.y, 1 / this.rate.z, {inversed: this});
     }
     return this._inversed;
+  }
+
+  /**
+   * @override
+   */
+  get transposed(): _Mat3 {
+    return this;
   }
 }
 
 class _RotateXMat3 extends _Mat3 {
   private radian: number;
   constructor(radian: number, options: _Mat3ConstructorOptions = {}) {
-    const c = Math.cos(radian);
-    const s = Math.sin(radian);
-    super(new Float32Array([
-      1, 0, 0,
-      0, c, s,
-      0, -s, c
-    ]), options);
+    super(options);
     this.radian = radian;
   }
 
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      const c = Math.cos(this.radian);
+      const s = Math.sin(this.radian);
+      this._elements = new Float32Array([
+        1, 0, 0,
+        0, c, s,
+        0, -s, c
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat3 {
     if (this._inversed === null) {
       this._inversed = new _RotateXMat3(-this.radian, {inversed: this});
     }
     return this._inversed;
   }
+
+  /**
+   * @override
+   */
+  get transposed(): _Mat3 {
+    return this.inversed;
+  }
 }
 
 class _RotateYMat3 extends _Mat3 {
   private radian: number;
   constructor(radian: number, options: _Mat3ConstructorOptions = {}) {
-    const c = Math.cos(radian);
-    const s = Math.sin(radian);
-    super(new Float32Array([
-      c, 0, -s,
-      0, 1, 0,
-      s, 0, c
-    ]), options);
+    super(options);
     this.radian = radian;
   }
 
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      const c = Math.cos(this.radian);
+      const s = Math.sin(this.radian);
+      this._elements = new Float32Array([
+        c, 0, -s,
+        0, 1, 0,
+        s, 0, c
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat3 {
     if (this._inversed === null) {
       this._inversed = new _RotateYMat3(-this.radian, {inversed: this});
     }
     return this._inversed;
   }
+
+  /**
+   * @override
+   */
+  get transposed(): _Mat3 {
+    return this.inversed;
+  }
 }
 
 class _RotateZMat3 extends _Mat3 {
   private radian: number;
   constructor(radian: number, options: _Mat3ConstructorOptions = {}) {
-    const c = Math.cos(radian);
-    const s = Math.sin(radian);
-    super(new Float32Array([
-      c, s, 0,
-      -s, c, 0,
-      0, 0, 1
-    ]), options);
+    super(options);
     this.radian = radian;
   }
 
+  /**
+   * @override
+   */
+  get elements(): Float32Array {
+    if (this._elements === null) {
+      const c = Math.cos(this.radian);
+      const s = Math.sin(this.radian);
+      this._elements = new Float32Array([
+        c, s, 0,
+        -s, c, 0,
+        0, 0, 1
+      ]);
+    }
+    return this._elements;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat3 {
     if (this._inversed === null) {
       this._inversed = new _RotateZMat3(-this.radian, {inversed: this});
     }
     return this._inversed;
+  }
+
+  /**
+   * @override
+   */
+  get transposed(): _Mat3 {
+    return this.inversed;
   }
 }
 

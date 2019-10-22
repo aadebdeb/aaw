@@ -122,7 +122,11 @@ export class Transform {
 
   get mat4(): Mat4 {
     if (this._mat4 === null) {
-      this._mat4 = Mat4.mul(Mat4.translate(this.translation.x, this.translation.y, this.translation.z), Mat4.scale(this.scaling.x, this.scaling.y, this.scaling.z));
+      this._mat4 = Mat4.mul(
+        Mat4.translate(this.translation),
+        this._rotation.toMat4(),
+        Mat4.scale(this.scaling)
+      );
     }
     return this._mat4;
   }
