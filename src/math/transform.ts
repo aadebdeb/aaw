@@ -23,33 +23,6 @@ export class Transform {
     this._scaling = scaling.clone();
   }
 
-  get translation(): Vec3 {
-    return this._translation.clone();
-  }
-
-  get rotation(): Quaternion {
-    return this._rotation.clone();
-  }
-
-  get scaling(): Vec3 {
-    return this._scaling.clone();
-  }
-
-  set translation(translation: Vec3) {
-    this._translation = translation.clone();
-    this._mat4 = null;
-  }
-
-  set rotation(rotation: Quaternion) {
-    this._rotation = rotation.clone();
-    this._mat4 = null;
-  }
-
-  set scaling(scaling: Vec3) {
-    this._scaling = scaling.clone();
-    this._mat4 = null;
-  }
-
   static identity(): Transform {
     const transform =  new Transform();
     transform._mat4 = Mat4.identity();
@@ -92,6 +65,33 @@ export class Transform {
       translation: origin.clone(),
       rotation: Quaternion.lookTo(forward, up)
     });
+  }
+
+  get translation(): Vec3 {
+    return this._translation.clone();
+  }
+
+  get rotation(): Quaternion {
+    return this._rotation.clone();
+  }
+
+  get scaling(): Vec3 {
+    return this._scaling.clone();
+  }
+
+  set translation(translation: Vec3) {
+    this._translation = translation.clone();
+    this._mat4 = null;
+  }
+
+  set rotation(rotation: Quaternion) {
+    this._rotation = rotation.clone();
+    this._mat4 = null;
+  }
+
+  set scaling(scaling: Vec3) {
+    this._scaling = scaling.clone();
+    this._mat4 = null;
   }
 
   translate(x: number, y: number, z: number): Transform {

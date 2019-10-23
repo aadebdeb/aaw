@@ -53,7 +53,7 @@ describe('Mat2.scale2d', () => {
 });
 
 describe('Mat2.rotate2d', () => {
-  it('creates 2D rotate matrix from Vec2', () => {
+  it('creates 2D rotate matrix', () => {
     const radian = Math.PI / 3.0;
     const actual = Mat2.rotate2d(radian);
     const c = Math.cos(radian);

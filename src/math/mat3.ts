@@ -14,18 +14,18 @@ export class Mat3 {
   }
 
   static translate2d(x: number | Vec2, y?: number): Mat3 {
-    if (x instanceof Vec2 && y === undefined) {
+    if (x instanceof Vec2) {
       return new Mat3(new _Translate2dMat3(x.x, x.y));
-    } else if (isNumber(x) && y !== undefined) {
+    } else if (y !== undefined) {
       return new Mat3(new _Translate2dMat3(x, y));
     }
     throw new Error('unsupported combination of args.');
   }
 
   static scale2d(x: number | Vec2, y?: number): Mat3 {
-    if (x instanceof Vec2 && y === undefined) {
+    if (x instanceof Vec2) {
       return new Mat3(new _Scale2dMat3(x.x, x.y));
-    } else if (isNumber(x) && y !== undefined) {
+    } else if (y !== undefined) {
       return new Mat3(new _Scale2dMat3(x, y));
     }
     throw new Error('unsupported combination of args.');
@@ -297,6 +297,16 @@ class _Scale2dMat3 extends _Mat3 {
   /**
    * @override
    */
+  get determinant(): number {
+    if (this._determinant === null) {
+      this._determinant = this.rate.x * this.rate.y;
+    }
+    return this._determinant;
+  }
+
+  /**
+   * @override
+   */
   get inversed(): _Mat3 {
     if (this._inversed === null) {
       this._inversed = new _Scale2dMat3(
@@ -366,6 +376,16 @@ class _ScaleMat3 extends _Mat3 {
       ]);
     }
     return this._elements;
+  }
+
+  /**
+   * @override
+   */
+  get determinant(): number {
+    if (this._determinant === null) {
+      this._determinant = this.rate.x * this.rate.y * this.rate.z;
+    }
+    return this._determinant;
   }
 
   /**

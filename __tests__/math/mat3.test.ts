@@ -1,6 +1,7 @@
 import { Vec2 } from '../../src/math/vec2';
+import { Vec3 } from '../../src/math/Vec3';
 import { Mat3 } from '../../src/math/mat3';
-import { equalMat3, CLOSE_DIGITS } from './utils';
+import { equalVec3, equalMat3, CLOSE_DIGITS } from './utils';
 
 test('Mat3.identity', () => {
   const actual = Mat3.identity();
@@ -55,19 +56,62 @@ describe('Mat3.scale2d', () => {
 });
 
 describe('Mat3.rotate2d', () => {
-  // TODO: needs tests.
+  it('creates rotation in 2D matrix', () => {
+    const radian = Math.PI / 3.0;
+    const actual = Mat3.rotate2d(radian);
+    const c = Math.cos(radian);
+    const s = Math.sin(radian);
+    const expected = Mat3.fromElements(new Float32Array([
+      c, s, 0,
+      -s, c, 0,
+      0, 0, 1
+    ]));
+    equalMat3(actual, expected);
+  });
+  it('creates a matrix which rotates Vec3 in 2D', () => {
+    const radian = Math.PI  / 3.0;
+    const c = Math.cos(radian);
+    const s = Math.sin(radian);
+    const m = Mat3.rotate2d(radian);
+    equalVec3(Vec3.mul(new Vec3(1, 0, 1), m), new Vec3(c, s, 1));
+    equalVec3(Vec3.mul(new Vec3(0, 1, 1), m), new Vec3(-s, c, 1));
+  });
 });
 
 describe('Mat3.rotateX', () => {
-  // TODO: needs tests.
+  it('creates a matrix which rotates Vec3 around X axis in 3D', () => {
+    const radian = Math.PI  / 3.0;
+    const c = Math.cos(radian);
+    const s = Math.sin(radian);
+    const m = Mat3.rotateX(radian);
+    equalVec3(Vec3.mul(new Vec3(1, 0, 0), m), new Vec3(1, 0, 0));
+    equalVec3(Vec3.mul(new Vec3(0, 1, 0), m), new Vec3(0, c, s));
+    equalVec3(Vec3.mul(new Vec3(0, 0, 1), m), new Vec3(0, -s, c));
+  });
 });
 
 describe('Mat3.rotateY', () => {
-  // TODO: needs tests.
-})
+  it('creates a matrix which rotates Vec3 around Y axis in 3D', () => {
+    const radian = Math.PI  / 3.0;
+    const c = Math.cos(radian);
+    const s = Math.sin(radian);
+    const m = Mat3.rotateY(radian);
+    equalVec3(Vec3.mul(new Vec3(1, 0, 0), m), new Vec3(c, 0, -s));
+    equalVec3(Vec3.mul(new Vec3(0, 1, 0), m), new Vec3(0, 1, 0));
+    equalVec3(Vec3.mul(new Vec3(0, 0, 1), m), new Vec3(s, 0, c));
+  });
+});
 
 describe('Mat3.rotateZ', () => {
-  // TODO: needs tests.
+  it('creates a matrix which rotates Vec3 around Z axis in 3D', () => {
+    const radian = Math.PI  / 3.0;
+    const c = Math.cos(radian);
+    const s = Math.sin(radian);
+    const m = Mat3.rotateZ(radian);
+    equalVec3(Vec3.mul(new Vec3(1, 0, 0), m), new Vec3(c, s, 0));
+    equalVec3(Vec3.mul(new Vec3(0, 1, 0), m), new Vec3(-s, c, 0));
+    equalVec3(Vec3.mul(new Vec3(0, 0, 1), m), new Vec3(0, 0, 1));
+  });
 });
 
 describe('Mat3.basis', () => {
