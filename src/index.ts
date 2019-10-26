@@ -6,3 +6,4 @@ export { Mat3 } from './math/mat3';
 export { Mat4 } from './math/mat4';
 export { Quaternion } from './math/quaternion';
 export { Transform } from './math/transform';
+export { EulerOrder } from './math/eulerOrder';

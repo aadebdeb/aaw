@@ -1,12 +1,69 @@
 import { Vec3 } from './Vec3';
 import { Mat3 } from './Mat3';
 import { Mat4 } from './Mat4';
+import { EulerOrder } from './eulerOrder';
 
 export class Quaternion {
   constructor(public x: number, public y: number, public z: number, public w: number) {}
 
   static identity(): Quaternion {
     return new Quaternion(0, 0, 0, 1);
+  }
+
+  static euler(x: number, y: number, z: number, order: EulerOrder = EulerOrder.YXZ): Quaternion {
+    const hx = 0.5 * x;
+    const hy = 0.5 * y;
+    const hz = 0.5 * z;
+    const cx = Math.cos(hx);
+    const cy = Math.cos(hy);
+    const cz = Math.cos(hz);
+    const sx = Math.sin(hx);
+    const sy = Math.sin(hy);
+    const sz = Math.sin(hz);
+    if (order === EulerOrder.XYZ) {
+      return new Quaternion(
+        sx * cy * cz - cx * sy * sz,
+        cx * sy * cz - sx * cy * sz,
+        cx * cy * sz + sx * sy * cz,
+        cx * cy * cz - sx * sy * sz
+      );
+    } else if (order === EulerOrder.XZY) {
+      return new Quaternion(
+        sx * cy * cz - cx * sy * sz,
+        cx * sy * cz - sx * cy * sz,
+        cx * cy * sz + sx * sy * cz,
+        cx * cy * cz + sx * sy * sz
+      );
+    } else if (order === EulerOrder.YXZ) {
+      return new Quaternion(
+        sx * cy * cz + cx * sy * sz,
+        cx * sy * cz - sx * cy * sz,
+        cx * cy * sz - sx * sy * cz,
+        cx * cy * cz + sx * sy * sz
+      );
+    } else if (order === EulerOrder.YZX) {
+      return new Quaternion(
+        sx * cy * cz + cx * sy * sz,
+        cx * sy * cz + sx * cy * sz,
+        cx * cy * sz - sx * sy * cz,
+        cx * cy * cz - sx * sy * sz
+      );
+    } else if (order === EulerOrder.ZXY) {
+      return new Quaternion(
+        sx * cy * cz - cx * sy * sz,
+        cx * sy * cz + sx * cy * sz,
+        cx * cy * sz + sx * sy * cz,
+        cx * cy * cz - sx * sy * sz
+      );
+    } else if (order === EulerOrder.ZYX) {
+      return new Quaternion(
+        sx * cy * cz - cx * sy * sz,
+        cx * sy * cz + sx * cy * sz,
+        cx * cy * sz - sx * sy * cz,
+        cx * cy * cz + sx * sy * sz
+      );
+    }
+    throw new Error('unsupported type of euler order.');
   }
 
   static axisAngle(axis: Vec3, radian: number): Quaternion {
