@@ -1,5 +1,5 @@
 import { Vec2 } from '../../src/math/vec2';
-import { Vec3 } from '../../src/math/Vec3';
+import { Vec3 } from '../../src/math/vec3';
 import { Mat3 } from '../../src/math/mat3';
 import { equalVec3, equalMat3, CLOSE_DIGITS } from './utils';
 

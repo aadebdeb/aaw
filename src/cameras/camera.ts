@@ -1,4 +1,4 @@
-import { Mat4 } from '../math/Mat4';
+import { Mat4 } from '../math/mat4';
 
 export interface Camera {
   readonly viewMat: Mat4;

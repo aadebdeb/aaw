@@ -1,6 +1,6 @@
-import { Vec3 } from './Vec3';
-import { Mat3 } from './Mat3';
-import { Mat4 } from './Mat4';
+import { Vec3 } from './vec3';
+import { Mat3 } from './mat3';
+import { Mat4 } from './mat4';
 import { EulerOrder } from './eulerOrder';
 
 export class Quaternion {

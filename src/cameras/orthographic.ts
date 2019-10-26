@@ -1,4 +1,4 @@
-import { Mat4 } from '../math/Mat4';
+import { Mat4 } from '../math/mat4';
 import { Transform } from '../math/transform';
 import { Camera } from './camera';
 

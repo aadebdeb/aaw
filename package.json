@@ -2,9 +2,14 @@
   "name": "aaw",
   "version": "0.0.1",
   "description": "",
-  "main": "dist/index.js",
+  "main": "cjs/index.js",
+  "module": "esm/index.js",
+  "types": "cjs/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:cjs && npm run build:esm && npm run build:umd",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:umd": "webpack",
     "test": "jest"
   },
   "keywords": [],
@@ -14,9 +19,14 @@
     "@types/jest": "^24.0.18",
     "jest": "^24.9.0",
     "ts-jest": "^24.1.0",
-    "typescript": "^3.6.3"
+    "ts-loader": "^6.2.1",
+    "typescript": "^3.6.3",
+    "webpack": "^4.41.2",
+    "webpack-cli": "^3.3.9"
   },
   "files": [
-    "dist"
+    "cjs",
+    "esm",
+    "umd"
   ]
 }
