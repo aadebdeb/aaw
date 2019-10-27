@@ -67,8 +67,8 @@ export class OrthographicCamera extends Transform implements Camera {
   }
 
   get viewMat(): Mat4 {
-    if (this._viewMat === null || this._viewMat !== this.mat4.inversed) {
-      this._viewMat = this.mat4.inversed;
+    if (this._viewMat === null || this._viewMat !== this.mat.inversed) {
+      this._viewMat = this.mat.inversed;
       this._vpMat = null;
     }
     return this._viewMat;
