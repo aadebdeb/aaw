@@ -7,3 +7,6 @@ export { Mat4 } from './math/mat4';
 export { Quaternion } from './math/quaternion';
 export { Transform } from './math/transform';
 export { EulerOrder } from './math/eulerOrder';
+export { Camera } from './cameras/camera';
+export { PerspectiveCamera } from './cameras/perspective';
+export { OrthographicCamera } from './cameras/orthographic';
