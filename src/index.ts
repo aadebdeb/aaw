@@ -12,4 +12,12 @@ export { PerspectiveCamera } from './cameras/perspective';
 export { OrthographicCamera } from './cameras/orthographic';
 export { VertexShader, FragmentShader } from './webgl/shader';
 export { Program } from './webgl/program';
-export { createShader, createProgram, CreateProgramOptions, getUniforms, createVbo, createIbo } from './utils/webgl';
+export {
+  createShader,
+  createProgram, CreateProgramOptions,
+  getUniforms,
+  createVbo, CreateVboOoptions,
+  createIbo, CreateIboOptions,
+  createTexture, CreateTextureOptions,
+  createFramebuffer, CreateFramebufferOptions,
+} from './utils/webgl';
