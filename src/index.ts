@@ -10,3 +10,6 @@ export { EulerOrder } from './math/eulerOrder';
 export { Camera } from './cameras/camera';
 export { PerspectiveCamera } from './cameras/perspective';
 export { OrthographicCamera } from './cameras/orthographic';
+export { VertexShader, FragmentShader } from './webgl/shader';
+export { Program } from './webgl/program';
+export { createShader, createProgram, CreateProgramOptions, getUniforms, createVbo, createIbo } from './utils/webgl';
